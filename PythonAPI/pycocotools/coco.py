@@ -231,12 +231,12 @@ class COCO:
         elif type(ids) == int:
             return [self.imgs[ids]]
 
-    def showAnns(self, anns, draw_bbox=False, dotted_bbox=False, color_list=[]):
+    def showAnns(self, anns, draw_bbox=False, dashed_bbox=False, color_list=[]):
         """
         Display the specified annotations.
         :param anns (array of object): annotations to display
         :param draw_bbox (boolean): True=display the bboxes, False=don't show bboxes
-        :param dotted_bbox (bool): specify the layout style of the bboxes. True -> 'dotted' and False -> 'full'. Dotted means bbox with empty face and dotted border, Full means face full and solid line (as for masks)
+        :param dashed_bbox (bool): specify the layout style of the bboxes. True -> 'dashed' and False -> 'full'. Dashed means bbox with empty face and dashed border, Full means face full and solid line (as for masks)
         :param color_list (list): list of colors used for the different bboxes and masks (use matplotlib named colors https://matplotlib.org/3.1.0/gallery/color/named_colors.html#sphx-glr-gallery-color-named-colors-py)
         if color_list is empty or the number of polygons is greater than the number of colors in input, random color will be used.
         :return: None
@@ -313,7 +313,7 @@ class COCO:
             p = PatchCollection(polygons, facecolor='none', edgecolors=color, linewidths=2)
             ax.add_collection(p)
             # add bbox patches
-            if dotted_bbox:  # dotted style
+            if dashed_bbox:  # dashed style
               p = PatchCollection(polygons_bbox, facecolor='none', edgecolors=color_bbox, linewidths=2, linestyle='--')
               ax.add_collection(p)
             else:  # full style
