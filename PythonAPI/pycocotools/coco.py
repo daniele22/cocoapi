@@ -49,6 +49,7 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
+from matplotlib import colors
 import numpy as np
 import copy
 import itertools
@@ -230,15 +231,19 @@ class COCO:
         elif type(ids) == int:
             return [self.imgs[ids]]
 
-    def showAnns(self, anns, draw_bbox=False):
+    def showAnns(self, anns, draw_bbox=False, dotted_bbox=False, color_list=[]):
         """
         Display the specified annotations.
         :param anns (array of object): annotations to display
+        :param draw_bbox (boolean): True=display the bboxes, False=don't show bboxes
+        :param dotted_bbox (bool): specify the layout style of the bboxes. True -> 'dotted' and False -> 'full'. Dotted means bbox with empty face and dotted border, Full means face full and solid line (as for masks)
+        :param color_list (list): list of colors used for the different bboxes and masks (use matplotlib named colors https://matplotlib.org/3.1.0/gallery/color/named_colors.html#sphx-glr-gallery-color-named-colors-py)
+        if color_list is empty or the number of polygons is greater than the number of colors in input, random color will be used.
         :return: None
         """
         if len(anns) == 0:
             return 0
-        if 'segmentation' in anns[0] or 'keypoints' in anns[0]:
+        if 'segmentation' in anns[0] or 'keypoints' in anns[0] or 'bbox' in anns[0]:
             datasetType = 'instances'
         elif 'caption' in anns[0]:
             datasetType = 'captions'
@@ -249,8 +254,16 @@ class COCO:
             ax.set_autoscale_on(False)
             polygons = []
             color = []
-            for ann in anns:
-                c = (np.random.random((1, 3))*0.6+0.4).tolist()[0]
+            polygons_bbox = []
+            color_bbox = []
+            no_color_in_input = len(color_list)
+            for i, ann in enumerate(anns):
+                
+                if no_color_in_input > i:
+                  c = colors.to_rgb(color_list[i])  # use color from list in input
+                else:
+                  c = (np.random.random((1, 3))*0.6+0.4).tolist()[0]  # use random color
+
                 if 'segmentation' in ann:
                     if type(ann['segmentation']) == list:
                         # polygon
@@ -291,13 +304,24 @@ class COCO:
                     [bbox_x, bbox_y, bbox_w, bbox_h] = ann['bbox']
                     poly = [[bbox_x, bbox_y], [bbox_x, bbox_y+bbox_h], [bbox_x+bbox_w, bbox_y+bbox_h], [bbox_x+bbox_w, bbox_y]]
                     np_poly = np.array(poly).reshape((4,2))
-                    polygons.append(Polygon(np_poly))
-                    color.append(c)
-
+                    polygons_bbox.append(Polygon(np_poly))
+                    color_bbox.append(c)
+            
+            # add mask patches (full style)
             p = PatchCollection(polygons, facecolor=color, linewidths=0, alpha=0.4)
             ax.add_collection(p)
             p = PatchCollection(polygons, facecolor='none', edgecolors=color, linewidths=2)
             ax.add_collection(p)
+            # add bbox patches
+            if dotted_bbox:  # dotted style
+              p = PatchCollection(polygons_bbox, facecolor='none', edgecolors=color_bbox, linewidths=2, linestyle='--')
+              ax.add_collection(p)
+            else:  # full style
+              p = PatchCollection(polygons_bbox, facecolor=color_bbox, linewidths=0, alpha=0.4)
+              ax.add_collection(p)
+              p = PatchCollection(polygons_bbox, facecolor='none', edgecolors=color_bbox, linewidths=2)
+              ax.add_collection(p)
+
         elif datasetType == 'captions':
             for ann in anns:
                 print(ann['caption'])
